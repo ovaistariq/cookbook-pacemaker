@@ -1,9 +1,10 @@
 #
-# Author:: Robert Choi
+# Author:: Robert Choi, Ovais Tariq <me@ovaistariq.net>
 # Cookbook Name:: pacemaker
 # Recipe:: default
 #
 # Copyright 2013, Robert Choi
+# Copyright 2015, Ovais Tariq
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
