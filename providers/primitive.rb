@@ -20,6 +20,7 @@
 require 'shellwords'
 
 include Chef::Mixin::Pacemaker::RunnableResource
+include Chef::Mixin::Pacemaker::StandardCIBObject
 
 action :create do
   name = new_resource.name
@@ -27,7 +28,10 @@ action :create do
   if @current_resource_definition.nil?
     create_resource(name)
   else
-    if @current_resource.agent != new_resource.agent
+    # "ocf:heartbeat" is assumed to be the default and hence also skipped in
+    # the output of the command `crm configure show`
+    if (@current_resource.agent != new_resource.agent &&
+        "ocf:heartbeat:#{@current_resource.agent}" != new_resource.agent)
       raise "Existing %s has agent '%s' " \
             "but recipe wanted '%s'" % \
             [ @current_cib_object, @current_resource.agent, new_resource.agent ]
