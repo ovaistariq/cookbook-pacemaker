@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-case node.platform
+case node.platform_family
 when 'suse'
   default[:pacemaker][:platform][:packages] = %w(pacemaker crmsh)
 
@@ -26,16 +26,29 @@ when 'suse'
     pacemaker-mgmt pacemaker-mgmt-client
     xorg-x11-xauth xorg-x11-fonts
   )
+  default[:pacemaker][:platform][:crm_package] = nil
 when 'rhel'
-  default[:pacemaker][:platform][:packages] = %w(pacemaker crmsh)
+  default[:pacemaker][:platform][:packages] = %w(pacemaker)
+  default[:pacemaker][:platform][:crm_package] = "crmsh"
   default[:pacemaker][:platform][:graphical_packages] = nil
+  default[:pacemaker][:platform][:service_name] = "pacemaker"
 end
 
 default[:pacemaker][:founder] = false
 default[:pacemaker][:crm][:initial_config_file] = "/etc/corosync/crm-initial.conf"
+
+# We ignore the quorum by default, this is needed for a 2 node cluster
+# as both the nodes go down in case of them is down as the remaining one will
+# also loose quorum
 default[:pacemaker][:crm][:no_quorum_policy] = "ignore"
+
+# Default timeout for operations in seconds
 default[:pacemaker][:crm][:op_default_timeout] = 60
 
+# Don't setup/configure heartbeat GUI
+default[:pacemaker][:setup_hb_gui] = false
+
+# stonith is disabled by default
 # Values can be "disabled", "manual", "sbd", "shared", "per_node"
 default[:pacemaker][:stonith][:mode] = "disabled"
 

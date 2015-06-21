@@ -23,6 +23,9 @@ if node[:pacemaker][:platform][:packages].nil?
   Chef::Application.fatal! "FIXME: #{node.platform} platform not supported yet"
 end
 
+# The crm command-line needs to be installed separately on RHEL
+crmsh_package = node[:pacemaker][:platform][:crm_package]
+
 # Configure the necessary yum repositories
 case node["platform_family"]
 when 'rhel'
@@ -31,14 +34,29 @@ when 'rhel'
     description "Stable High Availability/Clustering packages (CentOS_CentOS-6)"
     baseurl "http://download.opensuse.org/repositories/network:/ha-clustering:/Stable/CentOS_CentOS-6/"
     gpgkey 'http://download.opensuse.org/repositories/network:/ha-clustering:/Stable/CentOS_CentOS-6/repodata/repomd.xml.key'
-    action :create
     gpgcheck true
     enabled true
+    action :nothing
+  end
+
+  # Install the crmsh package separately
+  package crmsh_package do
+    action :nothing
+
+    # Disable the opensuse HA/Clustering repository
+    notifies :delete, 'yum_repository[network_ha-clustering_Stable]', :immediately
   end
 end
 
 node[:pacemaker][:platform][:packages].each do |pkg|
-  package pkg
+  package pkg do
+    action :install
+
+    if node["platform_family"] == "rhel"
+      notifies :create, 'yum_repository[network_ha-clustering_Stable]', :immediately
+      notifies :install, "package[#{crmsh_package}]", :immediately
+    end
+  end
 end
 
 if node[:pacemaker][:setup_hb_gui]
@@ -57,6 +75,7 @@ if node[:pacemaker][:setup_hb_gui]
   end
 end
 
+# Setup corosync
 if Chef::Config[:solo]
   unless ENV['RSPEC_RUNNING']
     Chef::Application.fatal! \
@@ -66,6 +85,17 @@ if Chef::Config[:solo]
   end
 else
   include_recipe "corosync::default"
+end
+
+if platform_family? "rhel"
+  service "pacemaker" do
+    action [ :enable, :start ]
+    retries 3
+    retry_delay 30
+
+    # Depends on clustered LVM cookbook
+    #notifies :restart, "service[clvm]", :immediately
+  end
 end
 
 ruby_block "wait for cluster to be online" do
@@ -88,15 +118,6 @@ end # ruby_block
 
 if node[:pacemaker][:founder]
   include_recipe "pacemaker::setup"
-end
-
-if platform_family? "rhel"
-  execute "sleep 2"
-
-  service "pacemaker" do
-    action [ :enable, :start ]
-    notifies :restart, "service[clvm]", :immediately
-  end
 end
 
 include_recipe "pacemaker::stonith"
