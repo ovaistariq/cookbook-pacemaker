@@ -14,7 +14,7 @@ suites:
     network:
       - ["private_network", {ip: "192.168.33.33"}]
   run_list:
-    - recipe[pacemaker::default]
+    - recipe[pacemaker_test::default]
   attributes:
     corosync:
       cluster_name: test_cluster
@@ -30,7 +30,7 @@ suites:
     network:
       - ["private_network", {ip: "192.168.33.34"}]
   run_list:
-    - recipe[pacemaker::default]
+    - recipe[pacemaker_test::default]
   attributes:
     corosync:
       cluster_name: test_cluster
