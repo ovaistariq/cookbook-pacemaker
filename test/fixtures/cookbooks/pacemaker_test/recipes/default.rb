@@ -44,11 +44,19 @@ pacemaker_primitive "haproxy" do
   only_if { node[:pacemaker][:founder] }
 end
 
-# Next we colocate cluster_vip and haproxy resources so that both the resources
+# We colocate cluster_vip and haproxy resources so that both the resources
 # are started on the same node, otherwise Pacemaker will balance the different
 # resources between different nodes
 pacemaker_colocation "haproxy-cluster_vip" do
   resources "haproxy cluster_vip"
   score "INFINITY"
+  only_if { node[:pacemaker][:founder] }
+end
+
+# We configure the order of resources so that any action taken on the resources
+# cluster_vip and haproxy are taken in order
+pacemaker_order "haproxy-after-cluster_vip" do
+  ordering "cluster_vip haproxy"
+  score "mandatory"
   only_if { node[:pacemaker][:founder] }
 end
