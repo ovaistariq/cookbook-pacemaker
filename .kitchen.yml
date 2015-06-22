@@ -24,6 +24,8 @@ suites:
       authkey: "6g4AqkD6s/1+CiH/6UWq78oMxXrkWd7wApBGsossAFy4smoFAIq5GUgTlwiz\nkzoPaSU7J7YSo9dmkZJv3oAWYCMPxpMBpWdleVZVyufomqPXKssfj0AwW0Gh\n5OBNcBToVaf6UD2dUSZiWnh2+3G30zdhqWwKrmcT2TVi8xJdCC8=\n"
     pacemaker:
       founder: true
+    add_vagrant_disk: true
+    vagrant_disk_size: 5
 
 - name: node-2
   driver:
@@ -39,3 +41,5 @@ suites:
       transport: "udpu"
       authkey: "6g4AqkD6s/1+CiH/6UWq78oMxXrkWd7wApBGsossAFy4smoFAIq5GUgTlwiz\nkzoPaSU7J7YSo9dmkZJv3oAWYCMPxpMBpWdleVZVyufomqPXKssfj0AwW0Gh\n5OBNcBToVaf6UD2dUSZiWnh2+3G30zdhqWwKrmcT2TVi8xJdCC8=\n"
     pacemaker:
+    add_vagrant_disk: true
+    vagrant_disk_size: 5

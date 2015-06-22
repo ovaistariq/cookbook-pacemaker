@@ -1,6 +1,9 @@
 metadata.json
 
 .vagrant
+Vagrantfiles/
+vagrant_disks/
+
 Berksfile.lock
 Gemfile.lock
 /cookbooks
