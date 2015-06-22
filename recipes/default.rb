@@ -19,12 +19,12 @@
 # limitations under the License.
 #
 
-if node[:pacemaker][:platform][:packages].nil?
-  Chef::Application.fatal! "FIXME: #{node.platform} platform not supported yet"
+if node["pacemaker"]["platform"]["packages"].nil?
+  Chef::Application.fatal! "FIXME: #{node['platform']} platform not supported yet"
 end
 
 # The crm command-line needs to be installed separately on RHEL
-crmsh_package = node[:pacemaker][:platform][:crm_package]
+crmsh_package = node["pacemaker"]["platform"]["crm_package"]
 
 # Configure the necessary yum repositories
 case node["platform_family"]
@@ -48,7 +48,7 @@ when 'rhel'
   end
 end
 
-node[:pacemaker][:platform][:packages].each do |pkg|
+node["pacemaker"]["platform"]["packages"].each do |pkg|
   package pkg do
     action :install
 
@@ -59,8 +59,8 @@ node[:pacemaker][:platform][:packages].each do |pkg|
   end
 end
 
-if node[:pacemaker][:setup_hb_gui]
-  node[:pacemaker][:platform][:graphical_packages].each do |pkg|
+if node["pacemaker"]["setup_hb_gui"]
+  node["pacemaker"]["platform"]["graphical_packages"].each do |pkg|
     package pkg
   end
 
@@ -87,15 +87,12 @@ else
   include_recipe "corosync::default"
 end
 
-if platform_family? "rhel"
-  service "pacemaker" do
-    action [ :enable, :start ]
-    retries 3
-    retry_delay 30
+service "pacemaker" do
+  action [ :enable, :start ]
+  retries 3
+  retry_delay 30
 
-    # Depends on clustered LVM cookbook
-    #notifies :restart, "service[clvm]", :immediately
-  end
+  only_if { platform_family? "rhel" }
 end
 
 ruby_block "wait for cluster to be online" do
@@ -116,7 +113,7 @@ ruby_block "wait for cluster to be online" do
   end # block
 end # ruby_block
 
-if node[:pacemaker][:founder]
+if node["pacemaker"]["founder"]
   include_recipe "pacemaker::setup"
 end
 

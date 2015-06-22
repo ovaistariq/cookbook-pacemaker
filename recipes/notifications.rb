@@ -21,28 +21,28 @@
 smtp_resource = "smtp-notifications"
 clone_smtp_resource = "cl-#{smtp_resource}"
 
-if node[:pacemaker][:notifications][:smtp][:enabled]
-  raise "No SMTP server for mail notifications!" if node[:pacemaker][:notifications][:smtp][:server].empty?
-  raise "No sender address for mail notifications!" if node[:pacemaker][:notifications][:smtp][:to].empty?
-  raise "No recipient address for mail notifications!" if node[:pacemaker][:notifications][:smtp][:from].empty?
+if node['pacemaker']['notifications']['smtp']["enabled"]
+  raise "No SMTP server for mail notifications!" if node['pacemaker']['notifications']['smtp']["server"].empty?
+  raise "No sender address for mail notifications!" if node['pacemaker']['notifications']['smtp']["to"].empty?
+  raise "No recipient address for mail notifications!" if node['pacemaker']['notifications']['smtp']["from"].empty?
 
   require 'shellwords'
 
-  server = Shellwords.shellescape(node[:pacemaker][:notifications][:smtp][:server])
-  to = Shellwords.shellescape(node[:pacemaker][:notifications][:smtp][:to])
-  from = Shellwords.shellescape(node[:pacemaker][:notifications][:smtp][:from])
+  server = Shellwords.shellescape(node['pacemaker']['notifications']['smtp']["server"])
+  to = Shellwords.shellescape(node['pacemaker']['notifications']['smtp']["to"])
+  from = Shellwords.shellescape(node['pacemaker']['notifications']['smtp']["from"])
 
   options = "-H #{server}"
   options += " -T #{to}"
   options += " -F #{from}"
 
-  unless node[:pacemaker][:notifications][:smtp][:prefix].nil? || node[:pacemaker][:notifications][:smtp][:prefix].empty?
-    prefix = Shellwords.shellescape(node[:pacemaker][:notifications][:smtp][:prefix])
+  unless node['pacemaker']['notifications']['smtp']['prefix'].nil? || node['pacemaker']['notifications']['smtp']['prefix'].empty?
+    prefix = Shellwords.shellescape(node['pacemaker']['notifications']['smtp']['prefix'])
     options += " -P #{prefix}"
   end
 
   pacemaker_primitive smtp_resource do
-    agent node[:pacemaker][:notifications][:agent]
+    agent node['pacemaker']['notifications']['agent']
     params ({ "extra_options" => options })
     action :create
   end
@@ -59,7 +59,7 @@ else
   end
 
   pacemaker_primitive smtp_resource do
-    agent node[:pacemaker][:notifications][:agent]
+    agent node['pacemaker']['notifications']['agent']
     action [:stop, :delete]
     only_if "crm configure show #{smtp_resource}"
   end

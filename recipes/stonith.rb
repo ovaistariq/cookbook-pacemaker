@@ -20,7 +20,7 @@
 
 # FIXME: delete old resources when switching mode (or agent!)
 
-case node[:pacemaker][:stonith][:mode]
+case node['pacemaker']['stonith']['mode']
 when "disabled"
 when "manual"
   # nothing!
@@ -29,8 +29,8 @@ when "sbd"
   require 'shellwords'
 
   sbd_devices = nil
-  sbd_devices ||= (node[:pacemaker][:stonith][:sbd][:nodes][node[:fqdn]][:devices] rescue nil)
-  sbd_devices ||= (node[:pacemaker][:stonith][:sbd][:nodes][node[:hostname]][:devices] rescue nil)
+  sbd_devices ||= (node['pacemaker']['stonith']['sbd']['nodes'][node['fqdn']]['devices'] rescue nil)
+  sbd_devices ||= (node['pacemaker']['stonith']['sbd']['nodes'][node['hostname']]['devices'] rescue nil)
   raise "No SBD devices defined!" if sbd_devices.nil? || sbd_devices.empty?
 
   sbd_cmd = "sbd"
@@ -46,14 +46,14 @@ when "sbd"
     command "#{sbd_cmd} dump &> /dev/null"
   end
 
-  if node.platform == 'suse'
+  if node['platform'] == 'suse'
     # We will want to explicitly allocate a slot the first time we come here
     # (hence the use of a notification to trigger this execute).
     # According to the man page, it should not be required, but apparently,
     # I've hit bugs where I had to do that. So better be safe.
     execute "Allocate SBD slot" do
-      command "#{sbd_cmd} allocate #{node[:hostname]}"
-      not_if "#{sbd_cmd} list | grep -q \" #{node[:hostname]} \""
+      command "#{sbd_cmd} allocate #{node['hostname']}"
+      not_if "#{sbd_cmd} list | grep -q \" #{node['hostname']} \""
       action :nothing
     end
 
@@ -67,7 +67,7 @@ when "sbd"
       )
       # We want to allocate slots before restarting corosync
       notifies :run, "execute[Allocate SBD slot]", :immediately
-      notifies :restart, "service[#{node[:corosync][:platform][:service_name]}]", :immediately
+      notifies :restart, "service[#{node['corosync']['platform']['service_name']}]", :immediately
       # After restarting corosync, we need to wait for the cluster to be online again
       notifies :create, "ruby_block[wait for cluster to be online]", :immediately
     end
@@ -79,8 +79,8 @@ when "sbd"
   end
 
 when "shared"
-  agent = node[:pacemaker][:stonith][:shared][:agent]
-  params = node[:pacemaker][:stonith][:shared][:params]
+  agent = node['pacemaker']['stonith']['shared']['agent']
+  params = node['pacemaker']['stonith']['shared']['params']
 
   # This needs to be done in the second phase of chef, because we need
   # cluster-glue to be installed first; hence ruby_block
@@ -113,7 +113,7 @@ when "shared"
   end
 
 when "per_node"
-  agent = node[:pacemaker][:stonith][:per_node][:agent]
+  agent = node['pacemaker']['stonith']['per_node']['agent']
 
   # This needs to be done in the second phase of chef, because we need
   # cluster-glue to be installed first; hence ruby_block
@@ -123,13 +123,13 @@ when "per_node"
     end
   end
 
-  node[:pacemaker][:stonith][:per_node][:nodes].keys.each do |node_name|
-    if node[:pacemaker][:stonith][:per_node][:mode] == "self"
-      next unless node_name == node[:hostname]
+  node['pacemaker']['stonith']['per_node']['nodes'].keys.each do |node_name|
+    if node['pacemaker']['stonith']['per_node']['mode'] == "self"
+      next unless node_name == node['hostname']
     end
 
     stonith_resource = "stonith-#{node_name}"
-    params = node[:pacemaker][:stonith][:per_node][:nodes][node_name][:params]
+    params = node['pacemaker']['stonith']['per_node']['nodes'][node_name]['params']
 
     if params.respond_to?('to_hash')
       primitive_params = params.to_hash
@@ -163,7 +163,7 @@ when "per_node"
   end
 
 else
-  message = "Unknown STONITH mode: #{node[:pacemaker][:stonith][:mode]}."
+  message = "Unknown STONITH mode: #{node['pacemaker']['stonith']['mode']}."
   Chef::Log.fatal(message)
   raise message
 end
