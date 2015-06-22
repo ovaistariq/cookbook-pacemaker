@@ -21,16 +21,34 @@
 # Do base corosync and pacemaker cluser setup and configuration
 include_recipe "pacemaker::default"
 
+# Setup haproxy
+include_recipe "pacemaker_test::haproxy"
+
 # Setup the cluster VIP on the founder pacemaker node
 pacemaker_primitive "cluster_vip" do
-  agent "ocf:heartbeat:IPaddr2"
+  agent node["pacemaker_test"]["virtual_ip"]["agent"]
   params ({
-    "ip" => "192.168.33.100",
+    "ip" => node["pacemaker_test"]["cluster_vip"],
     "cidr_netmask" => 24
   })
-  op ({
-    "monitor" => {"interval" => "30s"}
-  })
+  op node["pacemaker_test"]["virtual_ip"]["op"]
   action :create
+  only_if { node[:pacemaker][:founder] }
+end
+
+# Setup the haproxy privimite on the founder pacemaker node
+pacemaker_primitive "haproxy" do
+  agent node["pacemaker_test"]["haproxy"]["agent"]
+  op node["pacemaker_test"]["haproxy"]["op"]
+  action :create
+  only_if { node[:pacemaker][:founder] }
+end
+
+# Next we colocate cluster_vip and haproxy resources so that both the resources
+# are started on the same node, otherwise Pacemaker will balance the different
+# resources between different nodes
+pacemaker_colocation "haproxy-cluster_vip" do
+  resources "haproxy cluster_vip"
+  score "INFINITY"
   only_if { node[:pacemaker][:founder] }
 end
