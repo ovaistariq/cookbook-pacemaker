@@ -81,3 +81,33 @@ service "haproxy" do
   supports :restart => true, :status => true, :reload => true
   action :nothing
 end
+
+
+# Make pacemaker-corosync configuration for haproxy
+# Setup the haproxy privimite on the founder pacemaker node
+haproxy_resource = node["pacemaker_test"]["haproxy"]["resource_name"]
+vip_resource_name = node["pacemaker_test"]["virtual_ip"]["resource_name"]
+
+pacemaker_primitive haproxy_resource do
+  agent node["pacemaker_test"]["haproxy"]["agent"]
+  op node["pacemaker_test"]["haproxy"]["op"]
+  action :create
+  only_if { node[:pacemaker][:founder] }
+end
+
+# We colocate cluster_vip and haproxy resources so that both the resources
+# are started on the same node, otherwise Pacemaker will balance the different
+# resources between different nodes
+pacemaker_colocation "#{haproxy_resource}-#{vip_resource_name}" do
+  resources "#{haproxy_resource} #{vip_resource_name}"
+  score "INFINITY"
+  only_if { node[:pacemaker][:founder] }
+end
+
+# We configure the order of resources so that any action taken on the resources
+# cluster_vip and haproxy are taken in order
+pacemaker_order "#{haproxy_resource}-after-#{vip_resource_name}" do
+  ordering "#{vip_resource_name} #{haproxy_resource}"
+  score "mandatory"
+  only_if { node[:pacemaker][:founder] }
+end

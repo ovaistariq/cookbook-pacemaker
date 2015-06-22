@@ -33,9 +33,6 @@ namespace :integration do
   task :vagrant_setup do
     Kitchen.logger = Kitchen.default_file_logger
     Kitchen::Config.new.instances.each do |instance|
-      # serial execution cuz virtualbox/vagrant can't parallelize this part
-      instance.destroy()
-
       # this happens serially because virualbox/vagrant can't handle
       # parallel vm creation
       instance.create()

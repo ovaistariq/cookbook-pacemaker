@@ -18,6 +18,7 @@
 #
 
 include Chef::Mixin::Pacemaker::RunnableResource
+include Chef::Mixin::Pacemaker::StandardCIBObject
 
 action :create do
   standard_create_action

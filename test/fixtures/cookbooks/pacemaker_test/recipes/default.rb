@@ -21,11 +21,10 @@
 # Do base corosync and pacemaker cluser setup and configuration
 include_recipe "pacemaker::default"
 
-# Setup haproxy
-include_recipe "pacemaker_test::haproxy"
-
 # Setup the cluster VIP on the founder pacemaker node
-pacemaker_primitive "cluster_vip" do
+vip_resource_name = node["pacemaker_test"]["virtual_ip"]["resource_name"]
+
+pacemaker_primitive vip_resource_name do
   agent node["pacemaker_test"]["virtual_ip"]["agent"]
   params ({
     "ip" => node["pacemaker_test"]["cluster_vip"],
@@ -36,27 +35,8 @@ pacemaker_primitive "cluster_vip" do
   only_if { node[:pacemaker][:founder] }
 end
 
-# Setup the haproxy privimite on the founder pacemaker node
-pacemaker_primitive "haproxy" do
-  agent node["pacemaker_test"]["haproxy"]["agent"]
-  op node["pacemaker_test"]["haproxy"]["op"]
-  action :create
-  only_if { node[:pacemaker][:founder] }
-end
+# Setup haproxy
+include_recipe "pacemaker_test::haproxy"
 
-# We colocate cluster_vip and haproxy resources so that both the resources
-# are started on the same node, otherwise Pacemaker will balance the different
-# resources between different nodes
-pacemaker_colocation "haproxy-cluster_vip" do
-  resources "haproxy cluster_vip"
-  score "INFINITY"
-  only_if { node[:pacemaker][:founder] }
-end
-
-# We configure the order of resources so that any action taken on the resources
-# cluster_vip and haproxy are taken in order
-pacemaker_order "haproxy-after-cluster_vip" do
-  ordering "cluster_vip haproxy"
-  score "mandatory"
-  only_if { node[:pacemaker][:founder] }
-end
+# Setup DRBD
+include_recipe "pacemaker_test::drbd"
