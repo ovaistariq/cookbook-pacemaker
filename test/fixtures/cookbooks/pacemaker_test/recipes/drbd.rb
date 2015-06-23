@@ -72,8 +72,6 @@ pacemaker_colocation "#{fs_resource_name}-#{drbd_ms_resource_name}" do
   only_if { node[:pacemaker][:founder] }
 end
 
-# We configure the order of resources so that any action taken on the resources
-# filesystem and drbd are taken in order
 pacemaker_order "#{fs_resource_name}-after-#{drbd_ms_resource_name}" do
   ordering "#{drbd_ms_resource_name}:promote #{fs_resource_name}:start"
   score "mandatory"
